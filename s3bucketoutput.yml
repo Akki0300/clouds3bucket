@@ -1,0 +1,39 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: A sample template for creating an s3 bucket     
+Parameters:
+  BucketName:
+    Type: String
+    Description: please enter the name of the bucket 
+  AccessControl:
+    Type: String
+    AllowedValues: 
+      - PublicRead
+      - Private
+      - PublicReadWrite
+      - AuthenticatedRead
+      - LogDeliveryWrite
+      - BucketOwnerRead
+      - BucketOwnerFullControl
+      - AwsExecRead
+    Description: 'Access control can only have these values Private, PublicRead, PublicReadWrite, AuthenticatedRead, LogDeliveryWrite, BucketOwnerRead, BucketOwnerFullControl, or AwsExecRead'
+Resources: 
+  Newtypebucket:
+    Type: AWS::S3::Bucket 
+    DeletionPolicy: Retain
+    Properties:
+      AccessControl: !Ref AccessControl
+      BucketEncryption: 
+        ServerSideEncryptionConfiguration:
+          - ServerSideEncryptionByDefault:
+              SSEAlgorithm: 'aws:kms'
+              KMSMasterKeyID: KMS-KEY-ARN
+      BucketName: !Ref BucketName
+
+Outputs:
+  NewtypeBuck:
+    Value: !Ref Newtypebucket
+    Description: Name of the bucket 
+  
+  AccountId:
+    Value: !Ref "AWS::AccountId"
+    Description: provides the accountid of the s3 bucket 
