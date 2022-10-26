@@ -1,39 +1,26 @@
-AWSTemplateFormatVersion: 2010-09-09
-Description: A sample template for creating an s3 bucket     
-Parameters:
-  BucketName:
-    Type: String
-    Description: please enter the name of the bucket 
-  AccessControl:
-    Type: String
-    AllowedValues: 
-      - PublicRead
-      - Private
-      - PublicReadWrite
-      - AuthenticatedRead
-      - LogDeliveryWrite
-      - BucketOwnerRead
-      - BucketOwnerFullControl
-      - AwsExecRead
-    Description: 'Access control can only have these values Private, PublicRead, PublicReadWrite, AuthenticatedRead, LogDeliveryWrite, BucketOwnerRead, BucketOwnerFullControl, or AwsExecRead'
-Resources: 
-  Newtypebucket:
-    Type: AWS::S3::Bucket 
-    DeletionPolicy: Retain
-    Properties:
-      AccessControl: !Ref AccessControl
-      BucketEncryption: 
-        ServerSideEncryptionConfiguration:
-          - ServerSideEncryptionByDefault:
-              SSEAlgorithm: 'aws:kms'
-              KMSMasterKeyID: KMS-KEY-ARN
-      BucketName: !Ref BucketName
+stages:
+- stage: Docker
+  displayName: Build & Push Docker image to AWS ECR
+  jobs:
+  - job: Build_and_Push
+    displayName: Build & Push Docker image
+    pool:
+      vmImage: ubuntu-latest
+    steps:
+    - task: Docker@2
+      displayName: Build an image
+      inputs:
+        command: build
+        dockerfile: '$(Build.SourcesDirectory)/Dockerfile'
+        buildContext: '$(Build.SourcesDirectory)'
+        repository: $(DOCKER_REPOSITORY_NAME)
 
-Outputs:
-  NewtypeBuck:
-    Value: !Ref Newtypebucket
-    Description: Name of the bucket 
-  
-  AccountId:
-    Value: !Ref "AWS::AccountId"
-    Description: provides the accountid of the s3 bucket 
+    - task: ECRPushImage@1
+      inputs:
+        awsCredentials: 'AWS_ECR'
+        regionName: $(AWS_REGION)
+        imageSource: 'imagename'
+        sourceImageName: $(DOCKER_REPOSITORY_NAME)
+        sourceImageTag: $(Build.BuildId)
+        pushTag: latest
+        repositoryName: $(DOCKER_REPOSITORY_NAME
